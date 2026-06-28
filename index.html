@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Hero — Kuasai AI, Kalahkan Virus</title>
+  <meta name="description" content="Game edukasi prompt engineering. Jadilah Prompt Hero dan kalahkan virus GENERIC OUTPUT!" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========= LANDING PAGE ========= -->
+  <div id="landing-page" class="page active">
+    <div class="landing-bg">
+      <div class="virus-particles" id="virusParticles"></div>
+    </div>
+
+    <nav class="landing-nav">
+      <div class="nav-logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Prompt<span class="logo-accent">Hero</span></span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-ghost" id="navLeaderboard">🏆 Leaderboard</button>
+        <button class="btn-primary" id="navStart">Mulai Bermain</button>
+      </div>
+    </nav>
+
+    <div class="landing-content">
+      <div class="landing-badge">
+        <span class="badge-dot"></span>
+        Tahun 2032 — Dunia Dalam Bahaya
+      </div>
+
+      <h1 class="landing-title">
+        Virus <span class="glitch-text" data-text="GENERIC OUTPUT">GENERIC OUTPUT</span>
+        <br />Menyerang AI Global.
+      </h1>
+
+      <p class="landing-desc">
+        Hanya <strong>Prompt Hero</strong> yang bisa menghentikannya.<br />
+        Senjatamu bukan pedang — tapi <strong>Prompt Engineering</strong>.
+      </p>
+
+      <div class="landing-stats">
+        <div class="stat-item">
+          <span class="stat-num">20</span>
+          <span class="stat-label">Level</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">7</span>
+          <span class="stat-label">Achievement</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">∞</span>
+          <span class="stat-label">Prompt</span>
+        </div>
+      </div>
+
+      <div class="landing-cta">
+        <button class="btn-hero" id="startGameBtn">
+          <span>⚡ Mulai Misi</span>
+          <div class="btn-glow"></div>
+        </button>
+        <button class="btn-outline" id="continueBtn">Lanjutkan Progres</button>
+      </div>
+
+      <div class="landing-virus-info">
+        <div class="virus-card">
+          <div class="virus-icon">🦠</div>
+          <div class="virus-name">Boring Output</div>
+          <div class="virus-desc">Jawaban AI membosankan & generik</div>
+        </div>
+        <div class="virus-card">
+          <div class="virus-icon">🌀</div>
+          <div class="virus-name">Hallucination</div>
+          <div class="virus-desc">AI berfantasi & membuat fakta palsu</div>
+        </div>
+        <div class="virus-card">
+          <div class="virus-icon">❓</div>
+          <div class="virus-name">Ambiguous</div>
+          <div class="virus-desc">Prompt tidak jelas, output salah arah</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= SETUP PAGE ========= -->
+  <div id="setup-page" class="page">
+    <div class="setup-container">
+      <button class="btn-back" id="setupBack">← Kembali</button>
+      <div class="setup-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
+      <h2 class="setup-title">Buat Profil Hero Kamu</h2>
+
+      <div class="setup-form">
+        <div class="form-group">
+          <label>Nama Hero</label>
+          <input type="text" id="playerName" placeholder="Masukkan namamu..." maxlength="20" />
+        </div>
+
+        <div class="form-group">
+          <label>Pilih Avatar</label>
+          <div class="avatar-grid" id="avatarGrid">
+            <div class="avatar-option active" data-avatar="🦸">🦸</div>
+            <div class="avatar-option" data-avatar="🧙">🧙</div>
+            <div class="avatar-option" data-avatar="👩‍💻">👩‍💻</div>
+            <div class="avatar-option" data-avatar="🤖">🤖</div>
+            <div class="avatar-option" data-avatar="🦊">🦊</div>
+            <div class="avatar-option" data-avatar="🐉">🐉</div>
+            <div class="avatar-option" data-avatar="⚡">⚡</div>
+            <div class="avatar-option" data-avatar="🔮">🔮</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Kamu adalah...</label>
+          <div class="role-grid" id="roleGrid">
+            <div class="role-option active" data-role="Profesional">💼 Profesional</div>
+            <div class="role-option" data-role="Mahasiswa">🎓 Mahasiswa</div>
+            <div class="role-option" data-role="Guru">📚 Guru</div>
+            <div class="role-option" data-role="UMKM">🏪 UMKM</div>
+            <div class="role-option" data-role="Pelajar SMA">🏫 Pelajar SMA</div>
+            <div class="role-option" data-role="Creator">🎨 Creator</div>
+          </div>
+        </div>
+
+        <button class="btn-hero btn-full" id="createProfileBtn">
+          <span>⚡ Mulai Petualangan!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= MAIN DASHBOARD ========= -->
+  <div id="dashboard-page" class="page">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
+        <button class="sidebar-close" id="sidebarClose">✕</button>
+      </div>
+
+      <div class="player-card">
+        <div class="player-avatar" id="sidebarAvatar">🦸</div>
+        <div class="player-info">
+          <div class="player-name" id="sidebarName">Hero</div>
+          <div class="player-role" id="sidebarRole">Profesional</div>
+        </div>
+      </div>
+
+      <div class="player-stats">
+        <div class="xp-section">
+          <div class="xp-label">
+            <span>⭐ XP</span>
+            <span id="sidebarXP">0</span>
+          </div>
+          <div class="xp-bar">
+            <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+          </div>
+          <div class="xp-level">Level <span id="sidebarLevel">1</span></div>
+        </div>
+
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span class="ms-icon">💰</span>
+            <span class="ms-val" id="sidebarCoins">0</span>
+            <span class="ms-label">Coin</span>
+          </div>
+          <div class="mini-stat">
+            <span class="ms-icon">🔥</span>
+            <span class="ms-val" id="sidebarStreak">0</span>
+            <span class="ms-label">Streak</span>
+          </div>
+          <div class="mini-stat">
+            <span class="ms-icon">❤️</span>
+            <span class="ms-val" id="sidebarHearts">5</span>
+            <span class="ms-label">Hati</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="levels">
+          <span class="nav-icon">🗺️</span> Level Map
+        </button>
+        <button class="nav-item" data-section="achievements">
+          <span class="nav-icon">🏅</span> Achievement
+        </button>
+        <button class="nav-item" data-section="leaderboard">
+          <span class="nav-icon">🏆</span> Leaderboard
+        </button>
+        <button class="nav-item" data-section="daily">
+          <span class="nav-icon">📅</span> Daily Challenge
+        </button>
+        <button class="nav-item" data-section="history">
+          <span class="nav-icon">📜</span> Histori Prompt
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle">🌙 Mode Gelap</button>
+        <button class="btn-ghost btn-sm" id="resetBtn">⚠️ Reset Data</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <header class="dash-header">
+        <button class="hamburger" id="hamburger">☰</button>
+        <div class="dash-title" id="sectionTitle">Peta Level</div>
+        <div class="dash-header-right">
+          <div class="hearts-display" id="heartsDisplay">❤️❤️❤️❤️❤️</div>
+          <div class="daily-badge" id="dailyBadge">📅 Daily</div>
+        </div>
+      </header>
+
+      <!-- SECTION: Level Map -->
+      <section class="dash-section active" id="section-levels">
+        <div class="world-intro">
+          <div class="world-badge">🌍 Dunia: Terra Promptus</div>
+          <h2 class="world-title">Pilih Level Misimu</h2>
+          <p class="world-desc">Kalahkan virus GENERIC OUTPUT satu per satu</p>
+        </div>
+        <div class="level-grid" id="levelGrid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- SECTION: Achievements -->
+      <section class="dash-section" id="section-achievements">
+        <h2 class="section-heading">🏅 Achievement</h2>
+        <div class="achievements-grid" id="achievementsGrid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- SECTION: Leaderboard -->
+      <section class="dash-section" id="section-leaderboard">
+        <h2 class="section-heading">🏆 Leaderboard</h2>
+        <div class="leaderboard-tabs">
+          <button class="lb-tab active" data-tab="xp">Top XP</button>
+          <button class="lb-tab" data-tab="score">Top Score</button>
+          <button class="lb-tab" data-tab="streak">Top Streak</button>
+        </div>
+        <div class="leaderboard-list" id="leaderboardList">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- SECTION: Daily Challenge -->
+      <section class="dash-section" id="section-daily">
+        <h2 class="section-heading">📅 Daily Challenge</h2>
+        <div class="daily-container" id="dailyContainer">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- SECTION: History -->
+      <section class="dash-section" id="section-history">
+        <h2 class="section-heading">📜 Histori Prompt</h2>
+        <div class="history-list" id="historyList">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========= GAME PAGE ========= -->
+  <div id="game-page" class="page">
+    <!-- Game Header HUD -->
+    <div class="game-hud">
+      <button class="btn-back-game" id="gameBack">← Keluar</button>
+      <div class="hud-center">
+        <div class="hud-level" id="hudLevel">Level 1: Prompt Dasar</div>
+        <div class="hud-hearts" id="hudHearts">❤️❤️❤️❤️❤️</div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-xp">⭐ <span id="hudXP">0</span> XP</div>
+      </div>
+    </div>
+
+    <!-- Game Stage -->
+    <div class="game-stage" id="gameStage">
+
+      <!-- Stage 1: Client Intro -->
+      <div class="stage active" id="stage-1">
+        <div class="client-scene">
+          <div class="client-character">
+            <div class="client-avatar" id="clientAvatar">👤</div>
+            <div class="speech-bubble" id="speechBubble">
+              <div class="bubble-text" id="clientMessage"></div>
+            </div>
+          </div>
+          <div class="client-context">
+            <div class="context-label">📋 Misi:</div>
+            <div class="context-text" id="clientContext"></div>
+          </div>
+          <button class="btn-hero" id="stage1Next">Lihat Prompt Buruk →</button>
+        </div>
+      </div>
+
+      <!-- Stage 2: Bad Prompt -->
+      <div class="stage" id="stage-2">
+        <div class="bad-prompt-scene">
+          <div class="virus-alert">
+            <div class="virus-icon-big">🦠</div>
+            <div class="virus-label">VIRUS TERDETEKSI!</div>
+          </div>
+          <div class="bad-prompt-display">
+            <div class="prompt-label">Prompt Buruk:</div>
+            <div class="bad-prompt-text" id="badPromptText"></div>
+          </div>
+          <div class="bad-output-display">
+            <div class="output-label">Output AI yang Buruk:</div>
+            <div class="bad-output-text glitch-output" id="badOutputText"></div>
+          </div>
+          <div class="bad-analysis">
+            <div class="analysis-label">⚠️ Masalah yang Ditemukan:</div>
+            <div class="analysis-list" id="badAnalysisList"></div>
+          </div>
+          <button class="btn-hero" id="stage2Next">🛠️ Perbaiki Prompt →</button>
+        </div>
+      </div>
+
+      <!-- Stage 3: Fix Prompt -->
+      <div class="stage" id="stage-3">
+        <div class="fix-prompt-scene">
+          <div class="scene-header">
+            <h3>✏️ Buat Prompt Terbaikmu!</h3>
+            <div class="scene-target" id="fixTarget"></div>
+          </div>
+
+          <!-- CRAFT Panel -->
+          <div class="craft-panel">
+            <div class="craft-header">
+              <span class="craft-title">🛠️ Framework CRAFT</span>
+              <button class="craft-toggle" id="craftToggle">Buka Panel ▼</button>
+            </div>
+            <div class="craft-body" id="craftBody">
+              <div class="craft-tabs">
+                <button class="craft-tab active" data-craft="context">C</button>
+                <button class="craft-tab" data-craft="role">R</button>
+                <button class="craft-tab" data-craft="action">A</button>
+                <button class="craft-tab" data-craft="format">F</button>
+                <button class="craft-tab" data-craft="test">T</button>
+              </div>
+              <div class="craft-content" id="craftContent"></div>
+            </div>
+          </div>
+
+          <!-- Prompt Editor -->
+          <div class="prompt-editor">
+            <div class="editor-label">
+              <span>✏️ Prompt-mu:</span>
+              <div class="editor-counter"><span id="charCount">0</span> karakter</div>
+            </div>
+            <textarea
+              id="promptInput"
+              placeholder="Tulis prompt terbaikmu di sini..."
+              rows="6"
+            ></textarea>
+            <div class="editor-hints">
+              <span class="hint">💡 Tips: Gunakan CRAFT untuk membuat prompt yang lebih baik!</span>
+            </div>
+          </div>
+
+          <button class="btn-hero btn-generate" id="generateBtn">
+            <span id="generateBtnText">⚡ Generate & Evaluasi Prompt</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stage 4: Result -->
+      <div class="stage" id="stage-4">
+        <div class="result-scene">
+          <div class="result-score-display">
+            <div class="score-stars" id="scoreStars">⭐⭐⭐</div>
+            <div class="score-number" id="scoreNumber">0</div>
+            <div class="score-label" id="scoreLabel">Evaluating...</div>
+          </div>
+
+          <div class="score-breakdown">
+            <h3>📊 Rincian Skor</h3>
+            <div class="breakdown-grid" id="breakdownGrid"></div>
+          </div>
+
+          <div class="ai-feedback">
+            <div class="feedback-header">
+              <span class="ai-icon">🤖</span>
+              <span>Feedback dari AI Mentor</span>
+            </div>
+            <div class="feedback-body" id="feedbackBody">
+              <div class="feedback-loading" id="feedbackLoading">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+                <p>AI Mentor sedang menganalisis promptmu...</p>
+              </div>
+              <div class="feedback-content" id="feedbackContent" style="display:none"></div>
+            </div>
+          </div>
+
+          <div class="result-actions" id="resultActions">
+            <!-- Rendered by JS based on score -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========= MODALS ========= -->
+
+  <!-- Level Complete Modal -->
+  <div class="modal-overlay" id="levelCompleteModal" style="display:none">
+    <div class="modal-box celebration">
+      <div class="celebration-header">
+        <div class="cel-emoji">🎉</div>
+        <h2>Level Selesai!</h2>
+      </div>
+      <div class="rewards-display" id="rewardsDisplay"></div>
+      <div class="cel-buttons">
+        <button class="btn-hero" id="nextLevelBtn">Level Berikutnya →</button>
+        <button class="btn-outline" id="backToMapBtn">Kembali ke Peta</button>
+      </div>
+      <div id="confettiContainer" class="confetti-container"></div>
+    </div>
+  </div>
+
+  <!-- Achievement Modal -->
+  <div class="modal-overlay" id="achievementModal" style="display:none">
+    <div class="modal-box achievement-modal">
+      <div class="achievement-glow">
+        <div class="ach-icon" id="achIcon">🏅</div>
+      </div>
+      <h3>Achievement Baru!</h3>
+      <div class="ach-name" id="achName"></div>
+      <div class="ach-desc" id="achDesc"></div>
+      <button class="btn-hero" id="achClose">Keren! 🔥</button>
+    </div>
+  </div>
+
+  <!-- Leaderboard Page Modal -->
+  <div class="modal-overlay" id="leaderboardModal" style="display:none">
+    <div class="modal-box leaderboard-modal">
+      <button class="modal-close" id="lbClose">✕</button>
+      <h2>🏆 Leaderboard Global</h2>
+      <div id="lbContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
