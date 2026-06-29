@@ -107,8 +107,8 @@ function renderSection(key) {
       const geminiInput = document.getElementById('geminiKeysInput');
       const groqInput = document.getElementById('groqKeysInput');
       const keys = appState?.settings?.apiKeys || { gemini: [], groq: [] };
-      if (geminiInput) geminiInput.value = (keys.gemini || []).join('\n');
-      if (groqInput) groqInput.value = (keys.groq || []).join('\n');
+      if (geminiInput) geminiInput.value = (keys.gemini || []).join(',');
+      if (groqInput) groqInput.value = (keys.groq || []).join(',');
       break;
   }
 }
