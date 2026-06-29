@@ -1021,6 +1021,11 @@ body {
   max-width: 500px;
 }
 
+.api-settings-modal {
+  width: 90%;
+  max-width: 500px;
+}
+
 .context-label {
   font-size: 0.8rem;
   font-weight: 700;

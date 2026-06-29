@@ -37,6 +37,10 @@ const DEFAULT_STATE = {
   settings: {
     theme: 'dark',
     sound: true,
+    apiKeys: {
+      gemini: [],
+      groq: []
+    }
   },
   dailyChallenge: {
     date: null,

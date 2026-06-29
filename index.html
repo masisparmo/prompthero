@@ -206,6 +206,7 @@
 
       <div class="sidebar-footer">
         <button class="theme-toggle" id="themeToggle">🌙 Mode Gelap</button>
+        <button class="btn-ghost btn-sm" id="apiSettingsBtn">⚙️ Pengaturan API</button>
         <button class="btn-ghost btn-sm" id="resetBtn">⚠️ Reset Data</button>
       </div>
     </aside>
@@ -451,6 +452,31 @@
       <button class="modal-close" id="lbClose">✕</button>
       <h2>🏆 Leaderboard Global</h2>
       <div id="lbContent"></div>
+    </div>
+  </div>
+
+  <!-- API Settings Modal -->
+  <div class="modal-overlay" id="apiSettingsModal" style="display:none">
+    <div class="modal-box api-settings-modal">
+      <button class="modal-close" id="apiClose">✕</button>
+      <h2>⚙️ Pengaturan API Key</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Masukkan API key untuk mengevaluasi prompt. Kamu bisa memasukkan lebih dari satu key (pisahkan dengan koma atau baris baru) untuk fitur round-robin.
+      </p>
+
+      <div class="form-group">
+        <label>Gemini API Keys (gemini-2.5-flash)</label>
+        <textarea id="geminiKeysInput" placeholder="AIzaSy...&#10;AIzaSy..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border);"></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>Groq API Keys (llama-3.3-70b-versatile)</label>
+        <textarea id="groqKeysInput" placeholder="gsk_...&#10;gsk_..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border);"></textarea>
+      </div>
+
+      <button class="btn-hero btn-full" id="saveApiKeysBtn" style="margin-top: 1.5rem;">
+        Simpan Pengaturan
+      </button>
     </div>
   </div>
 

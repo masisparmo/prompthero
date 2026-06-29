@@ -443,6 +443,59 @@ function wireEvents() {
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
+  // ── API Settings Modal ──
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  if (apiSettingsBtn) {
+    apiSettingsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('apiSettingsModal');
+      const geminiInput = document.getElementById('geminiKeysInput');
+      const groqInput = document.getElementById('groqKeysInput');
+
+      if (modal && geminiInput && groqInput) {
+        // Load current keys
+        const keys = appState?.settings?.apiKeys || { gemini: [], groq: [] };
+        geminiInput.value = (keys.gemini || []).join('\n');
+        groqInput.value = (keys.groq || []).join('\n');
+
+        modal.style.display = 'flex';
+      }
+    });
+  }
+
+  const apiClose = document.getElementById('apiClose');
+  if (apiClose) {
+    apiClose.addEventListener('click', () => {
+      const modal = document.getElementById('apiSettingsModal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
+  const saveApiKeysBtn = document.getElementById('saveApiKeysBtn');
+  if (saveApiKeysBtn) {
+    saveApiKeysBtn.addEventListener('click', () => {
+      const geminiInput = document.getElementById('geminiKeysInput');
+      const groqInput = document.getElementById('groqKeysInput');
+
+      if (appState && geminiInput && groqInput) {
+        // Parse keys: split by comma or newline, trim, remove empty
+        const parseKeys = (text) => text.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
+
+        if (!appState.settings) appState.settings = {};
+        if (!appState.settings.apiKeys) appState.settings.apiKeys = { gemini: [], groq: [] };
+
+        appState.settings.apiKeys.gemini = parseKeys(geminiInput.value);
+        appState.settings.apiKeys.groq = parseKeys(groqInput.value);
+
+        saveState(appState);
+
+        const modal = document.getElementById('apiSettingsModal');
+        if (modal) modal.style.display = 'none';
+
+        showToast('API Keys berhasil disimpan!', 'success');
+      }
+    });
+  }
+
   // ── Reset Data ──
   const resetBtn = document.getElementById('resetBtn');
   if (resetBtn) {
