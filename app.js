@@ -42,7 +42,7 @@ function showPage(pageId) {
 }
 
 /** Semua section di dashboard */
-const SECTIONS = ['levels', 'achievements', 'leaderboard', 'daily', 'history'];
+const SECTIONS = ['levels', 'achievements', 'leaderboard', 'daily', 'history', 'api'];
 
 /**
  * Tampilkan section tertentu di dashboard
@@ -67,6 +67,7 @@ function showSection(sectionKey) {
     leaderboard: 'Leaderboard',
     daily: 'Daily Challenge',
     history: 'Histori Prompt',
+    api: 'Pengaturan API',
   };
   const titleEl = document.getElementById('sectionTitle');
   if (titleEl) titleEl.textContent = titles[sectionKey] || '';
@@ -100,6 +101,14 @@ function renderSection(key) {
       break;
     case 'history':
       renderHistory(appState);
+      break;
+    case 'api':
+      // Muat API Keys ke textarea
+      const geminiInput = document.getElementById('geminiKeysInput');
+      const groqInput = document.getElementById('groqKeysInput');
+      const keys = appState?.settings?.apiKeys || { gemini: [], groq: [] };
+      if (geminiInput) geminiInput.value = (keys.gemini || []).join('\n');
+      if (groqInput) groqInput.value = (keys.groq || []).join('\n');
       break;
   }
 }
@@ -443,33 +452,7 @@ function wireEvents() {
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
-  // ── API Settings Modal ──
-  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
-  if (apiSettingsBtn) {
-    apiSettingsBtn.addEventListener('click', () => {
-      const modal = document.getElementById('apiSettingsModal');
-      const geminiInput = document.getElementById('geminiKeysInput');
-      const groqInput = document.getElementById('groqKeysInput');
-
-      if (modal && geminiInput && groqInput) {
-        // Load current keys
-        const keys = appState?.settings?.apiKeys || { gemini: [], groq: [] };
-        geminiInput.value = (keys.gemini || []).join('\n');
-        groqInput.value = (keys.groq || []).join('\n');
-
-        modal.style.display = 'flex';
-      }
-    });
-  }
-
-  const apiClose = document.getElementById('apiClose');
-  if (apiClose) {
-    apiClose.addEventListener('click', () => {
-      const modal = document.getElementById('apiSettingsModal');
-      if (modal) modal.style.display = 'none';
-    });
-  }
-
+  // ── Save API Keys ──
   const saveApiKeysBtn = document.getElementById('saveApiKeysBtn');
   if (saveApiKeysBtn) {
     saveApiKeysBtn.addEventListener('click', () => {
@@ -487,9 +470,6 @@ function wireEvents() {
         appState.settings.apiKeys.groq = parseKeys(groqInput.value);
 
         saveState(appState);
-
-        const modal = document.getElementById('apiSettingsModal');
-        if (modal) modal.style.display = 'none';
 
         showToast('API Keys berhasil disimpan!', 'success');
       }

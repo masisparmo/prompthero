@@ -202,11 +202,13 @@
         <button class="nav-item" data-section="history">
           <span class="nav-icon">📜</span> Histori Prompt
         </button>
+        <button class="nav-item" data-section="api">
+          <span class="nav-icon">⚙️</span> Pengaturan API
+        </button>
       </nav>
 
       <div class="sidebar-footer">
         <button class="theme-toggle" id="themeToggle">🌙 Mode Gelap</button>
-        <button class="btn-ghost btn-sm" id="apiSettingsBtn">⚙️ Pengaturan API</button>
         <button class="btn-ghost btn-sm" id="resetBtn">⚠️ Reset Data</button>
       </div>
     </aside>
@@ -270,6 +272,59 @@
           <!-- Rendered by JS -->
         </div>
       </section>
+
+      <!-- SECTION: API Settings -->
+      <section class="dash-section" id="section-api">
+        <h2 class="section-heading">⚙️ Pengaturan API Key</h2>
+        <div style="background:var(--bg-card); padding:20px; border-radius:12px; border:1px solid var(--border);">
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+            Prompt Hero menggunakan AI dari Google Gemini dan Groq Llama untuk mengevaluasi prompt kamu. Agar aplikasi bisa berjalan dengan stabil, kamu perlu memasukkan API Key milikmu sendiri. Tenang, keduanya bisa didapatkan secara <strong>GRATIS</strong>!
+          </p>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Gemini Section -->
+            <div style="background:rgba(77,159,255,0.05); border:1px solid rgba(77,159,255,0.2); padding:16px; border-radius:8px;">
+              <h3 style="color:#4d9fff; margin-bottom:12px; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                <span>⚡</span> Gemini (Google)
+              </h3>
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+                <strong style="color:var(--text);">Cara mendapatkan API Key Gratis:</strong><br/>
+                1. Kunjungi <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4d9fff; text-decoration:underline;">Google AI Studio</a>.<br/>
+                2. Login dengan akun Google kamu.<br/>
+                3. Klik tombol <strong>"Get API Key"</strong> lalu <strong>"Create API key"</strong>.<br/>
+                4. Salin kunci (yang diawali dengan <code>AIzaSy...</code>) dan tempel di kotak bawah.
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.85rem; font-weight:600;">Gemini API Keys</label>
+                <textarea id="geminiKeysInput" placeholder="Masukkan key (bisa lebih dari satu, pisahkan dengan baris baru)" rows="4" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--border); font-family: monospace; font-size:0.85rem; resize:vertical;"></textarea>
+              </div>
+            </div>
+
+            <!-- Groq Section -->
+            <div style="background:rgba(255,107,0,0.05); border:1px solid rgba(255,107,0,0.2); padding:16px; border-radius:8px;">
+              <h3 style="color:#ff6b00; margin-bottom:12px; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                <span>🚀</span> Llama (Groq)
+              </h3>
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+                <strong style="color:var(--text);">Cara mendapatkan API Key Gratis:</strong><br/>
+                1. Kunjungi <a href="https://console.groq.com/keys" target="_blank" style="color:#ff6b00; text-decoration:underline;">Groq Console</a>.<br/>
+                2. Login atau daftar akun baru.<br/>
+                3. Klik tombol <strong>"Create API Key"</strong>.<br/>
+                4. Salin kunci (yang diawali dengan <code>gsk_...</code>) dan tempel di kotak bawah.
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.85rem; font-weight:600;">Groq API Keys</label>
+                <textarea id="groqKeysInput" placeholder="Masukkan key (bisa lebih dari satu, pisahkan dengan baris baru)" rows="4" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--border); font-family: monospace; font-size:0.85rem; resize:vertical;"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; text-align:right;">
+            <button class="btn-hero" id="saveApiKeysBtn" style="padding:12px 32px;">💾 Simpan Konfigurasi</button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -452,31 +507,6 @@
       <button class="modal-close" id="lbClose">✕</button>
       <h2>🏆 Leaderboard Global</h2>
       <div id="lbContent"></div>
-    </div>
-  </div>
-
-  <!-- API Settings Modal -->
-  <div class="modal-overlay" id="apiSettingsModal" style="display:none">
-    <div class="modal-box api-settings-modal">
-      <button class="modal-close" id="apiClose">✕</button>
-      <h2>⚙️ Pengaturan API Key</h2>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-        Masukkan API key untuk mengevaluasi prompt. Kamu bisa memasukkan lebih dari satu key (pisahkan dengan koma atau baris baru) untuk fitur round-robin.
-      </p>
-
-      <div class="form-group">
-        <label>Gemini API Keys (gemini-2.5-flash)</label>
-        <textarea id="geminiKeysInput" placeholder="AIzaSy...&#10;AIzaSy..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border);"></textarea>
-      </div>
-
-      <div class="form-group" style="margin-top: 1rem;">
-        <label>Groq API Keys (llama-3.3-70b-versatile)</label>
-        <textarea id="groqKeysInput" placeholder="gsk_...&#10;gsk_..." rows="3" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border);"></textarea>
-      </div>
-
-      <button class="btn-hero btn-full" id="saveApiKeysBtn" style="margin-top: 1.5rem;">
-        Simpan Pengaturan
-      </button>
     </div>
   </div>
 
