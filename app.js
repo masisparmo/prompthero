@@ -369,12 +369,7 @@ function wireEvents() {
   const startGameBtn = document.getElementById('startGameBtn');
   if (startGameBtn) {
     startGameBtn.addEventListener('click', async () => {
-      const profiles = await getProfiles();
-      if (profiles.length > 0) {
-        showProfileSelectPage();
-      } else {
-        showPage('setup-page');
-      }
+      showProfileSelectPage();
     });
   }
 
@@ -386,7 +381,7 @@ function wireEvents() {
         showProfileSelectPage();
       } else {
         showToast('Belum ada profil tersimpan. Mulai baru dulu! ⚡', 'info');
-        showPage('setup-page');
+        showProfileSelectPage();
       }
     });
   }
@@ -394,12 +389,7 @@ function wireEvents() {
   const navStart = document.getElementById('navStart');
   if (navStart) {
     navStart.addEventListener('click', async () => {
-      const profiles = await getProfiles();
-      if (profiles.length > 0) {
-        showProfileSelectPage();
-      } else {
-        showPage('setup-page');
-      }
+      showProfileSelectPage();
     });
   }
 
