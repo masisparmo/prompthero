@@ -1,13 +1,101 @@
 /**
  * ai.js — Prompt Hero
- * Mengelola semua interaksi dengan AI API (Claude) untuk evaluasi prompt.
+ * Mengelola semua interaksi dengan AI API (Gemini, Groq Llama) untuk evaluasi prompt.
  */
 
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-6';
+import { loadState, saveState } from './storage.js';
+
+let geminiKeyIndex = 0;
+let groqKeyIndex = 0;
 
 /**
- * Evaluasi prompt pemain menggunakan Claude sebagai evaluator
+ * Mendapatkan API Key secara Round-Robin
+ * @param {string} type - 'gemini' | 'groq'
+ * @returns {string|null}
+ */
+function getApiKey(type) {
+  const state = loadState();
+  const keys = state?.settings?.apiKeys?.[type] || [];
+
+  if (keys.length === 0) return null;
+
+  if (type === 'gemini') {
+    const key = keys[geminiKeyIndex % keys.length];
+    geminiKeyIndex++;
+    return key;
+  } else if (type === 'groq') {
+    const key = keys[groqKeyIndex % keys.length];
+    groqKeyIndex++;
+    return key;
+  }
+  return null;
+}
+
+/**
+ * Panggil Google Gemini API
+ */
+async function callGemini(apiKey, systemPrompt, userMessage) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [{
+        role: "user",
+        parts: [{ text: userMessage }]
+      }],
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return rawText;
+}
+
+/**
+ * Panggil Groq API (Llama-3.3-70b-versatile)
+ */
+async function callGroq(apiKey, systemPrompt, userMessage) {
+  const url = 'https://api.groq.com/openai/v1/chat/completions';
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ],
+      response_format: { type: "json_object" }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API Error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.choices?.[0]?.message?.content || '';
+  return rawText;
+}
+
+/**
+ * Evaluasi prompt pemain menggunakan Gemini sebagai evaluator (dengan fallback Groq Llama, lalu offline)
  *
  * @param {Object} params
  * @param {string} params.playerPrompt - Prompt yang ditulis pemain
@@ -18,31 +106,35 @@ export async function evaluatePrompt({ playerPrompt, levelData }) {
   const systemPrompt = buildEvaluatorSystemPrompt(levelData);
   const userMessage = buildEvaluatorUserMessage(playerPrompt, levelData);
 
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+  const geminiKey = getApiKey('gemini');
+  if (geminiKey) {
+    try {
+      console.log('Attempting evaluation with Gemini API...');
+      const rawText = await callGemini(geminiKey, systemPrompt, userMessage);
+      return parseEvaluationResponse(rawText);
+    } catch (e) {
+      console.warn('Gemini evaluation failed, falling back to Groq...', e);
     }
-
-    const data = await response.json();
-    const rawText = data.content?.[0]?.text || '';
-
-    return parseEvaluationResponse(rawText);
-  } catch (error) {
-    console.error('Evaluation error:', error);
-    // Fallback evaluation jika API gagal
-    return buildFallbackEvaluation(playerPrompt);
+  } else {
+    console.warn('No Gemini key available. Skipping Gemini API.');
   }
+
+  const groqKey = getApiKey('groq');
+  if (groqKey) {
+    try {
+      console.log('Attempting evaluation with Groq API...');
+      const rawText = await callGroq(groqKey, systemPrompt, userMessage);
+      return parseEvaluationResponse(rawText);
+    } catch (e) {
+      console.warn('Groq evaluation failed, falling back to Offline...', e);
+    }
+  } else {
+    console.warn('No Groq key available. Skipping Groq API.');
+  }
+
+  // Fallback evaluation jika API gagal atau key tidak ada
+  console.log('Using Offline Evaluation Fallback.');
+  return buildFallbackEvaluation(playerPrompt);
 }
 
 /**

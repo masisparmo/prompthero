@@ -4,7 +4,11 @@
  * Entry point yang diload oleh index.html via <script type="module">
  */
 
-import { loadState, saveState, clearState, updateStreak } from './storage.js';
+import {
+  loadState, saveState, clearState, updateStreak,
+  initStorage, getProfiles, switchProfile, createProfile, deleteProfile, getActiveProfileId,
+  registerOnline, loginOnline, importOnlineProfile
+} from './storage.js';
 import { initGame } from './game.js';
 import {
   renderLevelGrid,
@@ -23,7 +27,7 @@ let appState = null;
 // ── Page & Section Management ─────────────────────────────────
 
 /** Semua page yang tersedia */
-const PAGES = ['landing-page', 'setup-page', 'dashboard-page', 'game-page'];
+const PAGES = ['landing-page', 'profile-select-page', 'auth-page', 'dashboard-page', 'game-page'];
 
 /**
  * Tampilkan halaman tertentu, sembunyikan yang lain
@@ -42,7 +46,7 @@ function showPage(pageId) {
 }
 
 /** Semua section di dashboard */
-const SECTIONS = ['levels', 'achievements', 'leaderboard', 'daily', 'history'];
+const SECTIONS = ['levels', 'achievements', 'leaderboard', 'daily', 'history', 'api'];
 
 /**
  * Tampilkan section tertentu di dashboard
@@ -67,6 +71,7 @@ function showSection(sectionKey) {
     leaderboard: 'Leaderboard',
     daily: 'Daily Challenge',
     history: 'Histori Prompt',
+    api: 'Pengaturan API',
   };
   const titleEl = document.getElementById('sectionTitle');
   if (titleEl) titleEl.textContent = titles[sectionKey] || '';
@@ -100,6 +105,14 @@ function renderSection(key) {
       break;
     case 'history':
       renderHistory(appState);
+      break;
+    case 'api':
+      // Muat API Keys ke textarea
+      const geminiInput = document.getElementById('geminiKeysInput');
+      const groqInput = document.getElementById('groqKeysInput');
+      const keys = appState?.settings?.apiKeys || { gemini: [], groq: [] };
+      if (geminiInput) geminiInput.value = (keys.gemini || []).join(',');
+      if (groqInput) groqInput.value = (keys.groq || []).join(',');
       break;
   }
 }
@@ -202,79 +215,7 @@ function handleDailyStart(levelNum) {
   startLevel(levelNum);
 }
 
-// ── Setup / Profile Creation ──────────────────────────────────
 
-/**
- * Inisialisasi halaman setup dengan event listeners
- */
-function initSetupPage() {
-  // Avatar grid
-  const avatarGrid = document.getElementById('avatarGrid');
-  if (avatarGrid) {
-    avatarGrid.querySelectorAll('.avatar-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        avatarGrid.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-      });
-    });
-  }
-
-  // Role grid
-  const roleGrid = document.getElementById('roleGrid');
-  if (roleGrid) {
-    roleGrid.querySelectorAll('.role-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        roleGrid.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-      });
-    });
-  }
-
-  // Create profile button
-  const createBtn = document.getElementById('createProfileBtn');
-  if (createBtn) {
-    createBtn.addEventListener('click', handleCreateProfile);
-  }
-
-  // Back button
-  const setupBack = document.getElementById('setupBack');
-  if (setupBack) {
-    setupBack.addEventListener('click', () => showPage('landing-page'));
-  }
-}
-
-/**
- * Handle pembuatan profil pemain baru
- */
-function handleCreateProfile() {
-  const nameInput = document.getElementById('playerName');
-  const name = nameInput?.value?.trim();
-
-  if (!name) {
-    showToast('Masukkan nama heromu dulu! ⚡', 'error');
-    nameInput?.focus();
-    return;
-  }
-
-  // Ambil avatar yang dipilih
-  const activeAvatar = document.querySelector('.avatar-option.active');
-  const avatar = activeAvatar?.dataset?.avatar || '🦸';
-
-  // Ambil role yang dipilih
-  const activeRole = document.querySelector('.role-option.active');
-  const role = activeRole?.dataset?.role || 'Profesional';
-
-  // Buat state baru
-  appState = loadState();
-  appState.player.name = name;
-  appState.player.avatar = avatar;
-  appState.player.role = role;
-  appState.player.createdAt = new Date().toISOString();
-  saveState(appState);
-
-  showToast(`Selamat datang, ${name}! ⚡`, 'success');
-  goToDashboard();
-}
 
 // ── Dashboard ─────────────────────────────────────────────────
 
@@ -356,42 +297,28 @@ function wireEvents() {
   // ── Landing Page ──
   const startGameBtn = document.getElementById('startGameBtn');
   if (startGameBtn) {
-    startGameBtn.addEventListener('click', () => {
-      const state = loadState();
-      if (state.player.name) {
-        // Profil sudah ada, langsung ke dashboard
-        appState = state;
-        goToDashboard();
-      } else {
-        showPage('setup-page');
-      }
+    startGameBtn.addEventListener('click', async () => {
+      showProfileSelectPage();
     });
   }
 
   const continueBtn = document.getElementById('continueBtn');
   if (continueBtn) {
-    continueBtn.addEventListener('click', () => {
-      const state = loadState();
-      if (state.player.name) {
-        appState = state;
-        goToDashboard();
+    continueBtn.addEventListener('click', async () => {
+      const profiles = await getProfiles();
+      if (profiles.length > 0) {
+        showProfileSelectPage();
       } else {
         showToast('Belum ada profil tersimpan. Mulai baru dulu! ⚡', 'info');
-        showPage('setup-page');
+        showProfileSelectPage();
       }
     });
   }
 
   const navStart = document.getElementById('navStart');
   if (navStart) {
-    navStart.addEventListener('click', () => {
-      const state = loadState();
-      if (state.player.name) {
-        appState = state;
-        goToDashboard();
-      } else {
-        showPage('setup-page');
-      }
+    navStart.addEventListener('click', async () => {
+      showProfileSelectPage();
     });
   }
 
@@ -443,16 +370,61 @@ function wireEvents() {
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
-  // ── Reset Data ──
+  // ── Save API Keys ──
+  const saveApiKeysBtn = document.getElementById('saveApiKeysBtn');
+  if (saveApiKeysBtn) {
+    saveApiKeysBtn.addEventListener('click', () => {
+      const geminiInput = document.getElementById('geminiKeysInput');
+      const groqInput = document.getElementById('groqKeysInput');
+
+      if (appState && geminiInput && groqInput) {
+        // Parse keys: split by comma or newline, trim, remove empty
+        const parseKeys = (text) => text.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
+
+        if (!appState.settings) appState.settings = {};
+        if (!appState.settings.apiKeys) appState.settings.apiKeys = { gemini: [], groq: [] };
+
+        appState.settings.apiKeys.gemini = parseKeys(geminiInput.value);
+        appState.settings.apiKeys.groq = parseKeys(groqInput.value);
+
+        saveState(appState);
+
+        showToast('API Keys berhasil disimpan!', 'success');
+      }
+    });
+  }
+
+  // ── Reset Data (Hapus Profil Aktif) ──
   const resetBtn = document.getElementById('resetBtn');
   if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (confirm('Reset semua data? Progres akan hilang permanen! ⚠️')) {
-        clearState();
+    resetBtn.addEventListener('click', async () => {
+      const activeId = getActiveProfileId();
+      if (confirm('Hapus profil ini beserta seluruh progresnya secara permanen? ⚠️')) {
+        if (activeId) {
+          await deleteProfile(activeId);
+        } else {
+          clearState();
+        }
         appState = null;
-        showToast('Data direset. Mulai petualangan baru! 🔄', 'info');
-        showPage('landing-page');
+        showToast('Profil dihapus. Kembali ke halaman utama. 🔄', 'info');
+        
+        const profiles = await getProfiles();
+        if (profiles.length > 0) {
+          showProfileSelectPage();
+        } else {
+          showPage('landing-page');
+        }
       }
+    });
+  }
+
+  // ── Ganti Profil dari Sidebar ──
+  const sidebarSwitchProfile = document.getElementById('sidebarSwitchProfile');
+  if (sidebarSwitchProfile) {
+    sidebarSwitchProfile.addEventListener('click', () => {
+      clearState();
+      showProfileSelectPage();
+      closeSidebar();
     });
   }
 
@@ -545,10 +517,282 @@ function wireEvents() {
 // ── App Init ──────────────────────────────────────────────────
 
 /**
+ * Inisialisasi halaman pemilih profil
+ */
+function initProfileSelectPage() {
+  const backBtn = document.getElementById('profileSelectBack');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      showPage('landing-page');
+    });
+  }
+
+
+
+  const createBtn = document.getElementById('createNewProfileBtn');
+  if (createBtn) {
+    createBtn.addEventListener('click', () => {
+      showPage('auth-page');
+    });
+  }
+}
+
+/**
+ * Tampilkan halaman pemilih profil dan render daftar profil
+ */
+async function showProfileSelectPage() {
+  showPage('profile-select-page');
+  
+  const profilesGrid = document.getElementById('profilesGrid');
+  if (!profilesGrid) return;
+
+  profilesGrid.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Memuat daftar hero...</div>';
+
+  try {
+    const profiles = await getProfiles();
+    const onlineProfiles = profiles.filter(p => p.isOnline);
+    
+    if (onlineProfiles.length === 0) {
+      profilesGrid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align:center; padding: 20px; color: var(--text-muted);">
+          Belum ada Hero Online yang dibuat. Silakan buat akun baru!
+        </div>
+      `;
+      return;
+    }
+
+    profilesGrid.innerHTML = onlineProfiles.map(p => `
+      <div class="profile-card" data-id="${p.id}">
+        <div class="profile-card-avatar">${p.avatar}</div>
+        <div class="profile-card-info">
+          <div class="profile-card-name">${p.name}</div>
+          <div class="profile-card-role">${p.role}</div>
+          <div class="profile-card-stats">Lv. ${p.level} — ${p.xp} XP</div>
+        </div>
+        <button class="btn-delete-profile" data-id="${p.id}" title="Hapus profil">✕</button>
+      </div>
+    `).join('');
+
+    // Event handler untuk klik kartu profil (pilih profil)
+    profilesGrid.querySelectorAll('.profile-card').forEach(card => {
+      card.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-delete-profile')) return;
+
+        const profileId = card.dataset.id;
+        try {
+          await switchProfile(profileId);
+          showToast('Profil dimuat! 🦸', 'success');
+          goToDashboard();
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal memuat profil', 'error');
+        }
+      });
+    });
+
+    // Event handler untuk menghapus profil
+    profilesGrid.querySelectorAll('.btn-delete-profile').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const profileId = btn.dataset.id;
+        const profile = onlineProfiles.find(p => p.id === profileId);
+        
+        if (confirm(`Apakah Anda yakin ingin menghapus profil Hero "${profile ? profile.name : ''}"? Semua progres akan hilang permanen!`)) {
+          const success = await deleteProfile(profileId);
+          if (success) {
+            showToast('Profil berhasil dihapus.', 'info');
+            showProfileSelectPage();
+          } else {
+            showToast('Gagal menghapus profil.', 'error');
+          }
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error(err);
+    profilesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 20px; color: var(--red);">Gagal memuat profil.</div>';
+  }
+}
+
+/**
+ * Inisialisasi halaman autentikasi (Login & Register)
+ */
+function initAuthPage() {
+  const authBack = document.getElementById('authBack');
+  if (authBack) {
+    authBack.addEventListener('click', () => {
+      showPage('profile-select-page');
+    });
+  }
+
+  // Switch tab login vs register
+  const tabLoginBtn = document.getElementById('tabLoginBtn');
+  const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+  const loginFormContainer = document.getElementById('loginFormContainer');
+  const registerFormContainer = document.getElementById('registerFormContainer');
+
+  if (tabLoginBtn && tabRegisterBtn && loginFormContainer && registerFormContainer) {
+    tabLoginBtn.addEventListener('click', () => {
+      tabLoginBtn.classList.add('active');
+      tabRegisterBtn.classList.remove('active');
+      loginFormContainer.style.display = 'block';
+      registerFormContainer.style.display = 'none';
+    });
+
+    tabRegisterBtn.addEventListener('click', () => {
+      tabRegisterBtn.classList.add('active');
+      tabLoginBtn.classList.remove('active');
+      registerFormContainer.style.display = 'block';
+      loginFormContainer.style.display = 'none';
+    });
+  }
+
+  // Handle register avatar grid
+  const registerAvatarGrid = document.getElementById('registerAvatarGrid');
+  if (registerAvatarGrid) {
+    registerAvatarGrid.querySelectorAll('.avatar-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        registerAvatarGrid.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
+  }
+
+  // Handle register role grid
+  const registerRoleGrid = document.getElementById('registerRoleGrid');
+  if (registerRoleGrid) {
+    registerRoleGrid.querySelectorAll('.role-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        registerRoleGrid.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
+  }
+
+  // Submit Login
+  const submitLoginBtn = document.getElementById('submitLoginBtn');
+  if (submitLoginBtn) {
+    submitLoginBtn.addEventListener('click', handleOnlineLogin);
+  }
+
+  // Submit Register
+  const submitRegisterBtn = document.getElementById('submitRegisterBtn');
+  if (submitRegisterBtn) {
+    submitRegisterBtn.addEventListener('click', handleOnlineRegister);
+  }
+}
+
+/**
+ * Handle login online via GAS
+ */
+async function handleOnlineLogin() {
+  const usernameInput = document.getElementById('loginUsername');
+  const passwordInput = document.getElementById('loginPassword');
+  
+  const username = usernameInput?.value?.trim();
+  const password = passwordInput?.value;
+
+  if (!username || !password) {
+    showToast('Username dan password harus diisi!', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitLoginBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  showToast('Menghubungkan ke Google Sheets...', 'info');
+
+  try {
+    const res = await loginOnline(username, password);
+    if (res.status === 'success') {
+      showToast('Login Berhasil! Mengunduh progres...', 'success');
+      
+      // Impor profil online ke IndexedDB
+      const importedState = res.state || {};
+      appState = await importOnlineProfile(username, importedState);
+      saveState(appState);
+
+      // Reset form
+      if (usernameInput) usernameInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+
+      goToDashboard();
+    } else {
+      showToast(res.message || 'Login gagal.', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal terhubung ke Google Sheets API.', 'error');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+/**
+ * Handle register online via GAS
+ */
+async function handleOnlineRegister() {
+  const usernameInput = document.getElementById('registerUsername');
+  const passwordInput = document.getElementById('registerPassword');
+  const nameInput = document.getElementById('registerName');
+  
+  const username = usernameInput?.value?.trim();
+  const password = passwordInput?.value;
+  const name = nameInput?.value?.trim();
+
+  if (!username || !password || !name) {
+    showToast('Username, password, dan nama tampilan harus diisi!', 'error');
+    return;
+  }
+
+  // Ambil avatar & role
+  const activeAvatar = document.querySelector('#registerAvatarGrid .avatar-option.active');
+  const avatar = activeAvatar?.dataset?.avatar || '🦸';
+
+  const activeRole = document.querySelector('#registerRoleGrid .role-option.active');
+  const role = activeRole?.dataset?.role || 'Profesional';
+
+  const submitBtn = document.getElementById('submitRegisterBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  showToast('Mendaftarkan akun ke Google Sheets...', 'info');
+
+  try {
+    const res = await registerOnline(username, password);
+    if (res.status === 'success') {
+      showToast('Registrasi Berhasil! Membuat profil lokal...', 'success');
+      
+      // Buat profile baru dengan status isOnline = true
+      appState = await createProfile(name, avatar, role, true, username);
+      saveState(appState);
+
+      // Reset form
+      if (usernameInput) usernameInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+      if (nameInput) nameInput.value = '';
+
+      goToDashboard();
+    } else {
+      showToast(res.message || 'Registrasi gagal.', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Gagal terhubung ke Google Sheets API.', 'error');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+/**
  * Inisialisasi aplikasi saat DOM siap
  */
-function init() {
-  // Load state
+async function init() {
+  // Load state and open IndexedDB
+  const storageOk = await initStorage();
+  if (!storageOk) {
+    showToast('Gagal memuat penyimpanan lokal!', 'error');
+  }
+
+  // Load state dari cache
   appState = loadState();
 
   // Terapkan tema tersimpan
@@ -557,19 +801,32 @@ function init() {
   // Wire semua event
   wireEvents();
 
-  // Inisialisasi setup page
-  initSetupPage();
+
+
+  // Inisialisasi profile select page
+  initProfileSelectPage();
+
+  // Inisialisasi auth page
+  initAuthPage();
 
   // Animasi landing page
   initVirusParticles();
 
   // Tentukan halaman awal
-  if (appState.player.name) {
-    // Pemain sudah punya profil — langsung ke dashboard
+  const activeId = getActiveProfileId();
+  if (activeId && appState && appState.player && appState.player.name) {
+    // Pemain sudah punya profil aktif — langsung ke dashboard
     goToDashboard();
   } else {
-    // Pemain baru — tampilkan landing
-    showPage('landing-page');
+    // Cek apakah ada profil online tersimpan
+    const profiles = await getProfiles();
+    const onlineProfiles = profiles.filter(p => p.isOnline);
+    if (onlineProfiles.length > 0) {
+      showProfileSelectPage();
+    } else {
+      // Pemain baru — tampilkan landing
+      showPage('landing-page');
+    }
   }
 
   console.log('⚡ Prompt Hero initialized. Ready to fight GENERIC OUTPUT!');

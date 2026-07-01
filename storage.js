@@ -1,10 +1,20 @@
 /**
  * storage.js — Prompt Hero
- * Semua operasi LocalStorage dipusatkan di sini.
- * Mudah diganti dengan Firebase/Supabase di Phase 2.
+ * Penyimpanan menggunakan IndexedDB untuk mendukung multi-profil
+ * dengan pola sinkronisasi Memory Cache untuk performa instan,
+ * ditambah sinkronisasi real-time ke Google Sheets via Google Apps Script.
  */
 
-const STORAGE_KEY = 'promptHeroData';
+const DB_NAME = 'PromptHeroDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'user_states';
+
+// GANTI DENGAN URL GOOGLE APPS SCRIPT WEB APP ANDA SEBAGAI DEVELOPER
+const DEVELOPER_GAS_URL = 'https://script.google.com/macros/s/AKfycbw93YtZcOcyvsb5gmEGpAin0jkBHkuDLkBF0Tpq3WajpgOinI8zfRr9hLaLlMA-AJ3CkQ/exec';
+
+let db = null;
+let activeProfileId = null;
+let activeState = null;
 
 /** State default untuk pemain baru */
 const DEFAULT_STATE = {
@@ -13,6 +23,8 @@ const DEFAULT_STATE = {
     avatar: '🦸',
     role: 'Profesional',
     createdAt: null,
+    isOnline: false,
+    username: '',
   },
   progress: {
     currentLevel: 1,
@@ -37,6 +49,11 @@ const DEFAULT_STATE = {
   settings: {
     theme: 'dark',
     sound: true,
+    apiKeys: {
+      gemini: [],
+      groq: []
+    },
+    googleSheetsSyncUrl: '',
   },
   dailyChallenge: {
     date: null,
@@ -46,40 +63,402 @@ const DEFAULT_STATE = {
 };
 
 /**
- * Membaca semua data dari localStorage
+ * Inisialisasi IndexedDB dan muat profil aktif jika ada
+ * @returns {Promise<boolean>} true jika berhasil
+ */
+export function initStorage() {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = (e) => {
+      console.error('IndexedDB open error:', e);
+      resolve(false);
+    };
+
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      
+      // Ambil active profile id dari localStorage
+      activeProfileId = localStorage.getItem('promptHeroActiveProfileId');
+      
+      if (activeProfileId) {
+        // Muat state profil tersebut
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const getReq = store.get(activeProfileId);
+
+        getReq.onsuccess = () => {
+          if (getReq.result) {
+            activeState = deepMerge(structuredClone(DEFAULT_STATE), getReq.result.state);
+            // Sinkronkan tema
+            const theme = activeState.settings?.theme || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+          } else {
+            // Profil tidak ditemukan di DB
+            localStorage.removeItem('promptHeroActiveProfileId');
+            activeProfileId = null;
+            activeState = null;
+          }
+          resolve(true);
+        };
+
+        getReq.onerror = () => {
+          resolve(true);
+        };
+      } else {
+        resolve(true);
+      }
+    };
+
+    request.onupgradeneeded = (e) => {
+      const dbInstance = e.target.result;
+      if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+        dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+/**
+ * Mendapatkan ID profil aktif saat ini
+ * @returns {string|null} ID profil
+ */
+export function getActiveProfileId() {
+  return activeProfileId;
+}
+
+/**
+ * Mengambil daftar semua profil dari database
+ * @returns {Promise<Array>} daftar metadata profil
+ */
+export function getProfiles() {
+  return new Promise((resolve) => {
+    if (!db) {
+      resolve([]);
+      return;
+    }
+
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const profiles = (request.result || []).map(record => ({
+        id: record.id,
+        name: record.name,
+        avatar: record.avatar,
+        role: record.role,
+        lastPlayed: record.lastPlayed,
+        xp: record.xp,
+        level: record.level,
+        isOnline: record.isOnline || false,
+        username: record.username || ''
+      }));
+      // Sort berdasarkan waktu bermain terakhir (terbaru dulu)
+      profiles.sort((a, b) => new Date(b.lastPlayed) - new Date(a.lastPlayed));
+      resolve(profiles);
+    };
+
+    request.onerror = () => {
+      resolve([]);
+    };
+  });
+}
+
+/**
+ * Berpindah ke profil tertentu
+ * @param {string} profileId
+ * @returns {Promise<Object>} state profil baru
+ */
+export function switchProfile(profileId) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error('Database not initialized'));
+      return;
+    }
+
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(profileId);
+
+    request.onsuccess = () => {
+      if (request.result) {
+        activeProfileId = profileId;
+        activeState = deepMerge(structuredClone(DEFAULT_STATE), request.result.state);
+        localStorage.setItem('promptHeroActiveProfileId', profileId);
+        resolve(activeState);
+      } else {
+        reject(new Error('Profile not found'));
+      }
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+/**
+ * Membuat profil baru (bisa offline atau online)
+ * @param {string} name
+ * @param {string} avatar
+ * @param {string} role
+ * @param {boolean} isOnline
+ * @param {string} username
+ * @returns {Promise<Object>} state profil baru
+ */
+export function createProfile(name, avatar, role, isOnline = false, username = '') {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error('Database not initialized'));
+      return;
+    }
+
+    const newId = 'hero_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const newState = structuredClone(DEFAULT_STATE);
+    newState.player.name = name;
+    newState.player.avatar = avatar;
+    newState.player.role = role;
+    newState.player.createdAt = new Date().toISOString();
+    newState.player.isOnline = isOnline;
+    newState.player.username = username;
+
+    const record = {
+      id: newId,
+      name,
+      avatar,
+      role,
+      lastPlayed: new Date().toISOString(),
+      xp: 0,
+      level: 1,
+      isOnline,
+      username,
+      state: newState
+    };
+
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(record);
+
+    request.onsuccess = () => {
+      activeProfileId = newId;
+      activeState = newState;
+      localStorage.setItem('promptHeroActiveProfileId', newId);
+      resolve(newState);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+/**
+ * Membuat profil baru berdasarkan state dari cloud (saat login online)
+ * @param {string} username
+ * @param {Object} cloudState
+ * @returns {Promise<Object>} state profil yang berhasil diimpor
+ */
+export function importOnlineProfile(username, cloudState) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error('Database not initialized'));
+      return;
+    }
+
+    const newId = 'hero_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const newState = deepMerge(structuredClone(DEFAULT_STATE), cloudState);
+    newState.player.isOnline = true;
+    newState.player.username = username;
+
+    const levelInfo = calcLevel(newState.stats?.xp || 0);
+    const record = {
+      id: newId,
+      name: newState.player.name,
+      avatar: newState.player.avatar,
+      role: newState.player.role,
+      lastPlayed: new Date().toISOString(),
+      xp: newState.stats?.xp || 0,
+      level: levelInfo.level,
+      isOnline: true,
+      username,
+      state: newState
+    };
+
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(record);
+
+    request.onsuccess = () => {
+      activeProfileId = newId;
+      activeState = newState;
+      localStorage.setItem('promptHeroActiveProfileId', newId);
+      resolve(newState);
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+}
+
+/**
+ * Menghapus profil dari database
+ * @param {string} profileId
+ * @returns {Promise<boolean>} true jika berhasil
+ */
+export function deleteProfile(profileId) {
+  return new Promise((resolve) => {
+    if (!db) {
+      resolve(false);
+      return;
+    }
+
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(profileId);
+
+    request.onsuccess = () => {
+      if (activeProfileId === profileId) {
+        activeProfileId = null;
+        activeState = null;
+        localStorage.removeItem('promptHeroActiveProfileId');
+      }
+      resolve(true);
+    };
+
+    request.onerror = () => {
+      resolve(false);
+    };
+  });
+}
+
+/**
+ * Membaca state aktif dari cache memori secara sinkron
  * @returns {Object} state lengkap
  */
 export function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(DEFAULT_STATE);
-    const saved = JSON.parse(raw);
-    // Merge dengan default agar field baru selalu ada
-    return deepMerge(structuredClone(DEFAULT_STATE), saved);
-  } catch (e) {
-    console.error('Error loading state:', e);
+  if (!activeState) {
     return structuredClone(DEFAULT_STATE);
   }
+  return activeState;
 }
 
 /**
- * Menyimpan seluruh state ke localStorage
+ * Menyimpan seluruh state ke memory cache dan menulis ke IndexedDB asinkron
+ * Serta memicu sinkronisasi Google Sheets jika akun online terhubung
  * @param {Object} state
  */
 export function saveState(state) {
+  activeState = state;
+  
+  if (!db || !activeProfileId) return;
+
+  const levelInfo = calcLevel(state.stats?.xp || 0);
+  const record = {
+    id: activeProfileId,
+    name: state.player.name,
+    avatar: state.player.avatar,
+    role: state.player.role,
+    lastPlayed: new Date().toISOString(),
+    xp: state.stats?.xp || 0,
+    level: levelInfo.level,
+    isOnline: state.player.isOnline || false,
+    username: state.player.username || '',
+    state: state
+  };
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    store.put(record);
+
+    // Kirim sinkronisasi ke Google Sheets secara asinkron (background sync)
+    if (state.player?.isOnline && DEVELOPER_GAS_URL && DEVELOPER_GAS_URL !== 'https://script.google.com/macros/s/AKfycbz_DEV_PLACEHOLDER/exec') {
+      syncOnline(state.player.username, state)
+        .then(res => {
+          if (res.status === 'success') {
+            console.log('⚡ Real-time sync to Google Sheets successful');
+          } else {
+            console.warn('⚠️ Google Sheets sync warning:', res.message);
+          }
+        })
+        .catch(err => {
+          console.error('❌ Google Sheets sync failed:', err);
+        });
+    }
   } catch (e) {
-    console.error('Error saving state:', e);
+    console.error('Error background saving state:', e);
   }
 }
 
 /**
- * Menghapus semua data (reset)
+ * Menghapus data aktif saat ini (logout / keluar profil)
  */
 export function clearState() {
-  localStorage.removeItem(STORAGE_KEY);
+  activeState = null;
+  activeProfileId = null;
+  localStorage.removeItem('promptHeroActiveProfileId');
 }
+
+// ── Google Sheets Sync API (GAS Interface) ──
+
+/**
+ * Mendaftarkan akun online baru di Google Sheets via GAS
+ * Menggunakan content-type text/plain untuk melewati CORS preflight OPTIONS request
+ */
+export function registerOnline(username, password) {
+  return fetch(DEVELOPER_GAS_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify({
+      action: 'register',
+      username,
+      password
+    })
+  }).then(res => res.json());
+}
+
+/**
+ * Melakukan verifikasi login akun online via GAS
+ */
+export function loginOnline(username, password) {
+  return fetch(DEVELOPER_GAS_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify({
+      action: 'login',
+      username,
+      password
+    })
+  }).then(res => res.json());
+}
+
+/**
+ * Sinkronisasi state progres game ke Google Sheets via GAS
+ */
+export function syncOnline(username, state) {
+  return fetch(DEVELOPER_GAS_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify({
+      action: 'sync',
+      username,
+      state
+    })
+  }).then(res => res.json());
+}
+
+// ── Gameplay State Updaters ──
 
 /**
  * Menambah XP ke state dan menyimpannya
