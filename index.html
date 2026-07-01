@@ -92,6 +92,99 @@
     </div>
   </div>
 
+  <!-- ========= PROFILE SELECT PAGE ========= -->
+  <div id="profile-select-page" class="page">
+    <div class="profile-select-container">
+      <button class="btn-back" id="profileSelectBack">← Kembali</button>
+      <div class="setup-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
+      <h2 class="setup-title">Pilih Hero Kamu</h2>
+      <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:24px; margin-top:-20px;">Pilih profil untuk melanjutkan misi, atau buat baru.</p>
+
+      <div class="profiles-grid" id="profilesGrid">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <button class="btn-ghost" id="createOfflineProfileBtn">
+          <span>📴 Main Offline</span>
+        </button>
+        <button class="btn-hero" id="createNewProfileBtn">
+          <span>🌐 Masuk / Daftar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= AUTH PAGE (LOGIN & REGISTER) ========= -->
+  <div id="auth-page" class="page">
+    <div class="setup-container">
+      <button class="btn-back" id="authBack">← Kembali</button>
+      <div class="setup-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
+      
+      <!-- Tab Selector -->
+      <div class="auth-tabs" style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <button class="auth-tab-btn active" id="tabLoginBtn" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--orange); font-weight: 700; cursor: pointer;">Masuk</button>
+        <button class="auth-tab-btn" id="tabRegisterBtn" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer;">Daftar Akun</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginFormContainer" class="auth-form-view">
+        <h2 class="setup-title" style="margin-bottom: 20px;">Masuk ke Akun Hero</h2>
+        <div class="setup-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUsername" placeholder="Masukkan username..." maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Masukkan password..." />
+          </div>
+          <button class="btn-hero btn-full" id="submitLoginBtn">
+            <span>⚡ Masuk & Ambil Progres</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerFormContainer" class="auth-form-view" style="display: none;">
+        <h2 class="setup-title" style="margin-bottom: 20px;">Daftar Akun Hero Baru</h2>
+        <div class="setup-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="registerUsername" placeholder="Pilih username..." maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="registerPassword" placeholder="Buat password..." />
+          </div>
+          <div class="form-group">
+            <label>Nama Tampilan Hero</label>
+            <input type="text" id="registerName" placeholder="Masukkan nama hero..." maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label>Pilih Avatar</label>
+            <div class="avatar-grid" id="registerAvatarGrid">
+              <div class="avatar-option active" data-avatar="🦸">🦸</div>
+              <div class="avatar-option" data-avatar="🧙">🧙</div>
+              <div class="avatar-option" data-avatar="👩‍💻">👩‍💻</div>
+              <div class="avatar-option" data-avatar="🤖">🤖</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Pilih Role</label>
+            <div class="role-grid" id="registerRoleGrid">
+              <div class="role-option active" data-role="Profesional">💼 Profesional</div>
+              <div class="role-option" data-role="Mahasiswa">🎓 Mahasiswa</div>
+            </div>
+          </div>
+          <button class="btn-hero btn-full" id="submitRegisterBtn">
+            <span>⚡ Daftar & Buat Hero</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ========= SETUP PAGE ========= -->
   <div id="setup-page" class="page">
     <div class="setup-container">
@@ -204,6 +297,9 @@
         </button>
         <button class="nav-item" data-section="api" id="navApiSettings">
           <span class="nav-icon">⚙️</span> Pengaturan API
+        </button>
+        <button class="nav-item" id="sidebarSwitchProfile">
+          <span class="nav-icon">🔄</span> Ganti Profil
         </button>
       </nav>
 
@@ -318,6 +414,8 @@
               </div>
             </div>
           </div>
+
+
 
           <div style="margin-top:20px; text-align:right;">
             <button class="btn-hero" id="saveApiKeysBtn" style="padding:12px 32px;">💾 Simpan Konfigurasi</button>

@@ -1635,3 +1635,166 @@ body {
 
 /* ── Selection ── */
 ::selection { background: var(--orange-glow); color: var(--text); }
+
+/* =====================================================
+   PROFILE SELECT PAGE
+   ===================================================== */
+#profile-select-page {
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.profile-select-container {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.profile-card {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-card:hover {
+  border-color: var(--orange);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--orange-glow);
+}
+
+.profile-card-avatar {
+  font-size: 2.2rem;
+  background: var(--bg-card);
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.profile-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-card-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-card-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.profile-card-stats {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--orange);
+  margin-top: 4px;
+}
+
+.btn-delete-profile {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all var(--transition);
+  opacity: 0;
+}
+
+.profile-card:hover .btn-delete-profile {
+  opacity: 0.7;
+}
+
+.btn-delete-profile:hover {
+  opacity: 1 !important;
+  color: var(--red);
+  background: rgba(255, 59, 59, 0.1);
+}
+
+/* =====================================================
+   AUTH PAGE & MULTI-USER ONLINE BADGES
+   ===================================================== */
+#auth-page {
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.auth-tab-btn {
+  transition: all var(--transition);
+  border-bottom: 2px solid transparent !important;
+}
+
+.auth-tab-btn.active {
+  border-bottom: 2px solid var(--orange) !important;
+  color: var(--orange) !important;
+}
+
+.auth-tab-btn:hover:not(.active) {
+  color: var(--text);
+}
+
+.profile-card-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.profile-card-badge.online {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(0, 230, 118, 0.2);
+}
+
+.profile-card-badge.offline {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
