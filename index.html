@@ -29,7 +29,7 @@
       </div>
       <div class="nav-actions">
         <button class="btn-ghost" id="navLeaderboard">🏆 Leaderboard</button>
-        <button class="btn-primary" id="navStart">Mulai Bermain</button>
+        <button class="btn-outline" id="navStart" style="padding: 8px 20px;">🌐 Masuk / Daftar</button>
       </div>
     </nav>
 
@@ -129,12 +129,12 @@
         <h2 class="setup-title" style="margin-bottom: 20px;">Masuk ke Akun Hero</h2>
         <div class="setup-form">
           <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="loginUsername" placeholder="Masukkan username..." maxlength="20" />
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" placeholder="Masukkan username…" maxlength="20" spellcheck="false" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="loginPassword" placeholder="Masukkan password..." />
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="Masukkan password…" autocomplete="current-password" />
           </div>
           <button class="btn-hero btn-full" id="submitLoginBtn">
             <span>⚡ Masuk & Ambil Progres</span>
@@ -147,16 +147,16 @@
         <h2 class="setup-title" style="margin-bottom: 20px;">Daftar Akun Hero Baru</h2>
         <div class="setup-form">
           <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="registerUsername" placeholder="Pilih username..." maxlength="20" />
+            <label for="registerUsername">Username</label>
+            <input type="text" id="registerUsername" placeholder="Pilih username…" maxlength="20" spellcheck="false" autocomplete="username" />
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="registerPassword" placeholder="Buat password..." />
+            <label for="registerPassword">Password</label>
+            <input type="password" id="registerPassword" placeholder="Buat password…" autocomplete="new-password" />
           </div>
           <div class="form-group">
-            <label>Nama Tampilan Hero</label>
-            <input type="text" id="registerName" placeholder="Masukkan nama hero..." maxlength="20" />
+            <label for="registerName">Nama Tampilan Hero</label>
+            <input type="text" id="registerName" placeholder="Masukkan nama hero…" maxlength="20" />
           </div>
           <div class="form-group">
             <label>Pilih Avatar</label>
@@ -190,7 +190,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
-        <button class="sidebar-close" id="sidebarClose">✕</button>
+        <button class="sidebar-close" id="sidebarClose" aria-label="Tutup menu navigasi">✕</button>
       </div>
 
       <div class="player-card">
@@ -265,7 +265,7 @@
     <!-- Main Content -->
     <main class="dashboard-main">
       <header class="dash-header">
-        <button class="hamburger" id="hamburger">☰</button>
+        <button class="hamburger" id="hamburger" aria-label="Buka menu navigasi">☰</button>
         <div class="dash-title" id="sectionTitle">Peta Level</div>
         <div class="dash-header-right">
           <div class="hearts-display" id="heartsDisplay">❤️❤️❤️❤️❤️</div>
@@ -555,7 +555,7 @@
   <!-- Leaderboard Page Modal -->
   <div class="modal-overlay" id="leaderboardModal" style="display:none">
     <div class="modal-box leaderboard-modal">
-      <button class="modal-close" id="lbClose">✕</button>
+      <button class="modal-close" id="lbClose" aria-label="Tutup modal">✕</button>
       <h2>🏆 Leaderboard Global</h2>
       <div id="lbContent"></div>
     </div>
