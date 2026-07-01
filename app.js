@@ -27,7 +27,7 @@ let appState = null;
 // ── Page & Section Management ─────────────────────────────────
 
 /** Semua page yang tersedia */
-const PAGES = ['landing-page', 'profile-select-page', 'auth-page', 'setup-page', 'dashboard-page', 'game-page'];
+const PAGES = ['landing-page', 'profile-select-page', 'auth-page', 'dashboard-page', 'game-page'];
 
 /**
  * Tampilkan halaman tertentu, sembunyikan yang lain
@@ -215,78 +215,7 @@ function handleDailyStart(levelNum) {
   startLevel(levelNum);
 }
 
-// ── Setup / Profile Creation ──────────────────────────────────
 
-/**
- * Inisialisasi halaman setup dengan event listeners
- */
-function initSetupPage() {
-  // Avatar grid
-  const avatarGrid = document.getElementById('avatarGrid');
-  if (avatarGrid) {
-    avatarGrid.querySelectorAll('.avatar-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        avatarGrid.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-      });
-    });
-  }
-
-  // Role grid
-  const roleGrid = document.getElementById('roleGrid');
-  if (roleGrid) {
-    roleGrid.querySelectorAll('.role-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        roleGrid.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-      });
-    });
-  }
-
-  // Create profile button
-  const createBtn = document.getElementById('createProfileBtn');
-  if (createBtn) {
-    createBtn.addEventListener('click', handleCreateProfile);
-  }
-
-  // Back button
-  const setupBack = document.getElementById('setupBack');
-  if (setupBack) {
-    setupBack.addEventListener('click', () => showPage('landing-page'));
-  }
-}
-
-/**
- * Handle pembuatan profil pemain baru
- */
-async function handleCreateProfile() {
-  const nameInput = document.getElementById('playerName');
-  const name = nameInput?.value?.trim();
-
-  if (!name) {
-    showToast('Masukkan nama heromu dulu! ⚡', 'error');
-    nameInput?.focus();
-    return;
-  }
-
-  // Ambil avatar yang dipilih
-  const activeAvatar = document.querySelector('.avatar-option.active');
-  const avatar = activeAvatar?.dataset?.avatar || '🦸';
-
-  // Ambil role yang dipilih
-  const activeRole = document.querySelector('.role-option.active');
-  const role = activeRole?.dataset?.role || 'Profesional';
-
-  try {
-    appState = await createProfile(name, avatar, role);
-    showToast(`Selamat datang, ${name}! ⚡`, 'success');
-    if (nameInput) nameInput.value = '';
-    goToDashboard();
-  } catch (err) {
-    console.error(err);
-    showToast('Gagal membuat profil baru.', 'error');
-  }
-}
 
 // ── Dashboard ─────────────────────────────────────────────────
 
@@ -598,12 +527,7 @@ function initProfileSelectPage() {
     });
   }
 
-  const createOfflineBtn = document.getElementById('createOfflineProfileBtn');
-  if (createOfflineBtn) {
-    createOfflineBtn.addEventListener('click', () => {
-      showPage('setup-page');
-    });
-  }
+
 
   const createBtn = document.getElementById('createNewProfileBtn');
   if (createBtn) {
@@ -626,26 +550,24 @@ async function showProfileSelectPage() {
 
   try {
     const profiles = await getProfiles();
+    const onlineProfiles = profiles.filter(p => p.isOnline);
     
-    if (profiles.length === 0) {
+    if (onlineProfiles.length === 0) {
       profilesGrid.innerHTML = `
         <div style="grid-column: 1/-1; text-align:center; padding: 20px; color: var(--text-muted);">
-          Belum ada Hero yang dibuat. Silakan buat Hero baru!
+          Belum ada Hero Online yang dibuat. Silakan buat akun baru!
         </div>
       `;
       return;
     }
 
-    profilesGrid.innerHTML = profiles.map(p => `
+    profilesGrid.innerHTML = onlineProfiles.map(p => `
       <div class="profile-card" data-id="${p.id}">
         <div class="profile-card-avatar">${p.avatar}</div>
         <div class="profile-card-info">
           <div class="profile-card-name">${p.name}</div>
           <div class="profile-card-role">${p.role}</div>
           <div class="profile-card-stats">Lv. ${p.level} — ${p.xp} XP</div>
-        </div>
-        <div class="profile-card-badge ${p.isOnline ? 'online' : 'offline'}">
-          ${p.isOnline ? '🌐 Online' : '📴 Offline'}
         </div>
         <button class="btn-delete-profile" data-id="${p.id}" title="Hapus profil">✕</button>
       </div>
@@ -673,7 +595,7 @@ async function showProfileSelectPage() {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const profileId = btn.dataset.id;
-        const profile = profiles.find(p => p.id === profileId);
+        const profile = onlineProfiles.find(p => p.id === profileId);
         
         if (confirm(`Apakah Anda yakin ingin menghapus profil Hero "${profile ? profile.name : ''}"? Semua progres akan hilang permanen!`)) {
           const success = await deleteProfile(profileId);
@@ -879,8 +801,7 @@ async function init() {
   // Wire semua event
   wireEvents();
 
-  // Inisialisasi setup page
-  initSetupPage();
+
 
   // Inisialisasi profile select page
   initProfileSelectPage();
@@ -897,9 +818,10 @@ async function init() {
     // Pemain sudah punya profil aktif — langsung ke dashboard
     goToDashboard();
   } else {
-    // Cek apakah ada profil tersimpan
+    // Cek apakah ada profil online tersimpan
     const profiles = await getProfiles();
-    if (profiles.length > 0) {
+    const onlineProfiles = profiles.filter(p => p.isOnline);
+    if (onlineProfiles.length > 0) {
       showProfileSelectPage();
     } else {
       // Pemain baru — tampilkan landing

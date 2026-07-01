@@ -104,12 +104,9 @@
         <!-- Rendered dynamically by JS -->
       </div>
 
-      <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <button class="btn-ghost" id="createOfflineProfileBtn">
-          <span>📴 Main Offline</span>
-        </button>
-        <button class="btn-hero" id="createNewProfileBtn">
-          <span>🌐 Masuk / Daftar</span>
+      <div style="margin-top: 24px;">
+        <button class="btn-hero btn-full" id="createNewProfileBtn">
+          <span>🌐 Masuk / Daftar Akun Online</span>
         </button>
       </div>
     </div>
@@ -185,51 +182,7 @@
     </div>
   </div>
 
-  <!-- ========= SETUP PAGE ========= -->
-  <div id="setup-page" class="page">
-    <div class="setup-container">
-      <button class="btn-back" id="setupBack">← Kembali</button>
-      <div class="setup-logo">⚡ Prompt<span class="logo-accent">Hero</span></div>
-      <h2 class="setup-title">Buat Profil Hero Kamu</h2>
-
-      <div class="setup-form">
-        <div class="form-group">
-          <label>Nama Hero</label>
-          <input type="text" id="playerName" placeholder="Masukkan namamu..." maxlength="20" />
-        </div>
-
-        <div class="form-group">
-          <label>Pilih Avatar</label>
-          <div class="avatar-grid" id="avatarGrid">
-            <div class="avatar-option active" data-avatar="🦸">🦸</div>
-            <div class="avatar-option" data-avatar="🧙">🧙</div>
-            <div class="avatar-option" data-avatar="👩‍💻">👩‍💻</div>
-            <div class="avatar-option" data-avatar="🤖">🤖</div>
-            <div class="avatar-option" data-avatar="🦊">🦊</div>
-            <div class="avatar-option" data-avatar="🐉">🐉</div>
-            <div class="avatar-option" data-avatar="⚡">⚡</div>
-            <div class="avatar-option" data-avatar="🔮">🔮</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Kamu adalah...</label>
-          <div class="role-grid" id="roleGrid">
-            <div class="role-option active" data-role="Profesional">💼 Profesional</div>
-            <div class="role-option" data-role="Mahasiswa">🎓 Mahasiswa</div>
-            <div class="role-option" data-role="Guru">📚 Guru</div>
-            <div class="role-option" data-role="UMKM">🏪 UMKM</div>
-            <div class="role-option" data-role="Pelajar SMA">🏫 Pelajar SMA</div>
-            <div class="role-option" data-role="Creator">🎨 Creator</div>
-          </div>
-        </div>
-
-        <button class="btn-hero btn-full" id="createProfileBtn">
-          <span>⚡ Mulai Petualangan!</span>
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- setup-page removed (online sync is mandatory) -->
 
   <!-- ========= MAIN DASHBOARD ========= -->
   <div id="dashboard-page" class="page">
